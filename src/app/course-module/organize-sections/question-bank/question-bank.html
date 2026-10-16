@@ -1,0 +1,224 @@
+<div class="min-h-screen bg-[#f6f6f6] font-sans text-[#505050]">
+  <!-- Left decoration -->
+
+  <main class="relative mx-auto max-w-[1500px] px-4 pb-8 pt-4 sm:px-6 xl:px-10">
+    <!-- Header -->
+    <header class="mb-7 flex flex-wrap items-start justify-between gap-5">
+      <div class="flex items-start gap-6">        
+        <div>
+          <h1 class="text-[22px] font-semibold">Create Question Bank</h1>
+          <p class="mt-1 text-sm">Give permission for people who can access features</p>
+        </div>  
+      </div>
+      <div class="flex flex-wrap gap-3">
+        <button type="button" (click)="fileInput.click()" class="rounded-full bg-white px-6 py-2 text-xs hover:bg-[#e9f6f8]">Import</button>
+        <input #fileInput type="file" hidden accept=".pdf,.doc,.docx,.csv,.xls,.xlsx" (change)="importFile($event)">
+        <button type="button" (click)="exportQuestions()" class="rounded-full bg-white px-6 py-2 text-xs hover:bg-[#e9f6f8]">Export</button>
+        <button type="button" (click)="showExisting = true" class="rounded-full bg-white px-6 py-2 text-xs hover:bg-[#e9f6f8]">Existing</button>
+      </div>
+    </header>
+
+    <div class="rounded-2xl bg-white p-4 sm:p-6 lg:p-5">
+      <div class="mb-5 flex flex-wrap items-center gap-x-6 gap-y-4 rounded-2xl bg-[#f6f6f6] px-5 py-3">
+        <span class="text-sm">Question Type</span>
+        @for (type of questionTypes; track type.value) {
+          <label class="flex cursor-pointer items-center gap-2 text-sm">
+            <input type="radio" name="questionType" [checked]="selectedType === type.value"
+              (change)="changeType(type.value)"
+              class="h-4 w-4 cursor-pointer">
+            {{ type.label }}
+          </label>
+        }
+        <button type="button" (click)="save()" [disabled]="saving"
+          class="ml-auto min-w-[104px] rounded-lg bg-white px-5 py-3 text-xs hover:bg-[#e9f6f8] disabled:opacity-50">
+          {{ saving ? 'Saving...' : 'Save' }}
+        </button>
+      </div>
+
+      @if (message) {
+        <div class="mb-4 rounded-xl px-4 py-3 text-sm"
+          [class]="messageType === 'error' ? 'bg-red-50 text-red-600' : 'bg-[#e9f6f8] text-[#357f8d]'">
+          {{ message }}
+        </div>
+      }
+
+      <div class="grid grid-cols-1 gap-5 lg:grid-cols-2">
+        <!-- Question editor -->
+        <section class="min-h-[560px] rounded-2xl bg-[#f6f6f6] p-4 sm:p-5">
+          <div class="mb-7 flex items-center justify-between gap-2">
+            <input type="text" maxlength="100" [ngModel]="activeSection?.name || ''"
+              (ngModelChange)="renameActiveSection($event)"
+              placeholder="Section name"
+              class="min-w-0 flex-1 bg-transparent text-sm font-semibold outline-none">
+            <button type="button" (click)="addSection()"
+              class="shrink-0 rounded-full bg-white px-4 py-2 text-xs hover:bg-[#e9f6f8]">
+              + Add Section
+            </button>
+          </div>
+
+          @if (activeSection; as section) {
+            @for (question of section.questions; track question.id; let qi = $index) {
+              <div class="mb-6">
+
+                @if (!question.hidden) {
+                  <textarea [(ngModel)]="question.text" (ngModelChange)="markDirty()"
+                    maxlength="500" rows="2" placeholder="Enter your question"
+                    class="mb-3 w-full resize-y rounded-2xl border-0 bg-white p-4 text-sm outline-none focus:ring-1 focus:ring-[#64bbcb]"></textarea>
+                    @if (question.type === 'short') {
+                    <textarea [(ngModel)]="question.shortAnswer" (ngModelChange)="markDirty()"
+                      maxlength="500" rows="3" placeholder="Enter expected short answer"
+                      class="w-full rounded-2xl bg-white p-4 text-sm outline-none focus:ring-1 focus:ring-[#64bbcb]"></textarea>
+                  } @else {
+                    @for (option of question.options; track option.id; let oi = $index) {
+                      <div class="mb-3 flex items-center gap-3 rounded-2xl bg-white px-4 py-3">
+                        @if (question.type === 'single') {
+                          <input type="radio" [name]="'answer-' + question.id" [checked]="option.correct"
+                            (change)="setCorrect(question, option.id)"
+                            class="h-4 w-4 accent-[#64bbcb]">
+                        } @else {
+                          <input type="checkbox" [checked]="option.correct"
+                            (change)="setCorrect(question, option.id)"
+                            class="h-4 w-4 accent-[#64bbcb]">
+                        }
+                        <input [(ngModel)]="option.text" (ngModelChange)="markDirty()" maxlength="200"
+                          [placeholder]="'Option ' + (oi + 1)"
+                          class="min-w-0 flex-1 bg-transparent text-sm outline-none">
+                      </div>
+                    }
+                    <button type="button" (click)="addOption(question)"
+                      class="mb-3 rounded-full bg-white px-5 py-2 text-xs hover:text-[#64bbcb]">
+                      + Add Option
+                    </button>
+                  }
+                  @if (question.scoringType === 'advanced' && question.type !== 'short') {
+                    <div class="mt-3 space-y-2">
+                      @for (option of question.options; track option.id; let oi = $index) {
+                        <div class="flex items-center gap-3 text-xs">
+                          <span class="w-20">Option {{ oi + 1 }}</span>
+                          <input type="number" min="0" max="100" [(ngModel)]="option.points"
+                            (ngModelChange)="markDirty()" placeholder="Points"
+                            class="w-24 rounded-lg bg-white p-2 outline-none">
+                        </div>
+                      }
+                    </div>
+                  }
+                }
+              </div>
+            }
+
+            <div class="mt-5 text-center">
+              <button type="button" (click)="addQuestion()"
+                class="rounded-full bg-white px-6 py-2.5 text-xs hover:bg-[#e9f6f8]">
+                + Add Question
+              </button>
+            </div>
+          } @else {
+            <div class="flex min-h-[380px] flex-col items-center justify-center gap-4 text-center">
+              <p class="text-sm text-gray-400">No sections created yet</p>
+              <button type="button" (click)="addSection()"
+                class="rounded-full bg-white px-6 py-3 text-xs">+ Add Section</button>
+            </div>
+          }
+        </section>
+
+        <!-- Organize sections -->
+        <section class="min-h-[560px] rounded-2xl bg-[#f6f6f6] p-4 sm:p-5">
+          <h2 class="mb-2 text-sm font-semibold">Organize Section</h2>
+          <p class="mb-6 text-sm">You can rearrange the sections</p>
+
+          <div cdkDropList (cdkDropListDropped)="dropSection($event)" class="space-y-5">
+            @for (section of sections; track section.id) {
+              <div cdkDrag class="flex min-h-[56px] items-center gap-3 rounded-2xl bg-white px-4 sm:px-6"
+                [class.ring-2]="activeSectionId === section.id"
+                [class.ring-[#64bbcb]]="activeSectionId === section.id">
+                <div class="min-w-0 flex-1 cursor-pointer text-sm"
+                  (click)="selectSection(section.id)"
+                  (dblclick)="editSection(section.id)">
+                  @if (editingSectionId === section.id) {
+                    <input [(ngModel)]="section.name" (ngModelChange)="markDirty()"
+                      (blur)="editingSectionId = null" (keydown.enter)="editingSectionId = null"
+                      maxlength="100" autofocus
+                      class="w-full border-b border-[#64bbcb] outline-none">
+                  } @else {
+                    <span class="block truncate">{{ section.name }}</span>
+                  }
+                </div>
+                <button type="button" (click)="editSection(section.id)"
+                  class="grid size-7 shrink-0 place-items-center rounded-full bg-[#61b7c5] text-white transition hover:bg-[#489daa] disabled:opacity-50"
+                  title="Edit section"><svg class="h-4 w-4 text-white" fill="currentColor" viewBox="0 0 24 24">
+              <path
+                d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25Zm17.71-10.04a1 1 0 0 0 0-1.42l-2.5-2.5a1 1 0 0 0-1.42 0l-1.83 1.83 3.75 3.75  5a2 2 0 0 1 2-2h7v2H5v14h14v-7h2v7a2 2 0 0 1-2 2H5a2 2 0 0 2-2-2V7Z" />
+                </svg></button>
+                <button type="button" (click)="deleteSection(section.id)"
+                  class="grid size-7 shrink-0 place-items-center rounded-full bg-[#61b7c5] text-white transition hover:bg-red-500 disabled:opacity-50"
+                  title="Delete section"><svg class="h-4 w-4 text-white" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M9 3V2h6v1h5v2H4V3h5Zm10 4H5v13a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7ZM 9h2v10H8V9Zm6" />
+            </svg></button>
+                <button type="button" cdkDragHandle title="Drag to reorder"
+                  class="cursor-grab text-lg text-gray-400">⠿</button>
+              </div>
+            }
+          </div>
+        </section>
+      </div>
+
+      <!-- Section score and feedback -->
+      <section class="mt-5 rounded-2xl bg-[#f6f6f6] p-4 sm:p-5">
+        <h3 class="mb-4 text-sm">{{ activeSection?.name || 'Section' }} points</h3>
+        <div class="grid grid-cols-1 gap-5 md:grid-cols-[215px_1fr]">
+          <div>
+            <label class="mb-3 block text-sm">Score</label>
+            <input type="number" min="0" max="100" [ngModel]="activeSection?.score ?? 0"
+              (ngModelChange)="setSectionScore($event)" [disabled]="!activeSection"
+              placeholder="Enter Score"
+              class="h-10 w-full rounded-lg bg-white px-3 text-sm outline-none focus:ring-1 focus:ring-[#64bbcb]">
+          </div>
+          <div>
+            <label class="mb-3 block text-sm">Feedback</label>
+            <textarea [ngModel]="activeSection?.feedback || ''"
+              (ngModelChange)="setSectionFeedback($event)"
+              [disabled]="!activeSection" maxlength="500" rows="1"
+              placeholder="Enter the Text"
+              class="min-h-10 w-full resize-y rounded-lg bg-white px-4 py-3 text-sm outline-none focus:ring-1 focus:ring-[#64bbcb]"></textarea>
+          </div>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <!-- Back confirmation -->
+  @if (showBackDialog) {
+    <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+      <div class="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl">
+        <h2 class="text-lg font-semibold">Unsaved Changes</h2>
+        <p class="mt-3 text-sm">Would you like to save or discard your changes?</p>
+        <div class="mt-6 flex flex-wrap justify-end gap-3">
+          <button type="button" (click)="showBackDialog = false" class="rounded-lg bg-gray-100 px-4 py-2 text-sm">Cancel</button>
+          <button type="button" (click)="discardChanges()" class="rounded-lg bg-red-50 px-4 py-2 text-sm text-red-600">Discard Changes</button>
+          <button type="button" (click)="saveAndBack()" class="rounded-lg bg-[#64bbcb] px-4 py-2 text-sm text-white">Save Changes</button>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- Existing question selection -->
+  @if (showExisting) {
+    <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+      <div class="max-h-[80vh] w-full max-w-lg overflow-y-auto rounded-2xl bg-white p-6">
+        <div class="mb-5 flex items-center justify-between">
+          <h2 class="text-lg font-semibold">Existing Questions</h2>
+          <button type="button" (click)="showExisting = false">✕</button>
+        </div>
+        @for (question of existingQuestions; track question.id) {
+          <div class="mb-3 flex items-center justify-between gap-3 rounded-xl bg-[#f6f6f6] p-4">
+            <span class="text-sm">{{ question.text || 'Untitled Question' }}</span>
+            <button type="button" (click)="addExistingQuestion(question)"
+              class="shrink-0 rounded-full bg-white px-4 py-2 text-xs">+ Add</button>
+          </div>
+        } @empty {
+          <p class="py-6 text-center text-sm text-gray-400">No existing questions available</p>
+        }
+      </div>
+    </div>
+  }
+</div>

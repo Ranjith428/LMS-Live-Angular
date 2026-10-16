@@ -1,4 +1,4 @@
-import { Component, DestroyRef, ElementRef, HostListener, computed, inject, signal, viewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, ElementRef, HostListener, computed, inject, signal, viewChild } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router } from '@angular/router';
 
@@ -15,6 +15,7 @@ import { AuthService } from '../../services/auth';
   imports: [EnrollUser],
   templateUrl: './enrolled-course-list.html',
   styleUrl: './enrolled-course-list.css',
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class EnrolledCourseList {
   private readonly route = inject(ActivatedRoute);
@@ -157,7 +158,7 @@ export class EnrolledCourseList {
   /** The menu acts on the current selection and can only be opened for a selected row. */
   toggleActionMenu(event: Event, userId: number): void {
     event.stopPropagation();
-    if (!this.selectedIds().has(userId) || this.unenrolling()) return;
+    if (this.unenrolling()) return;
     if (this.openActionFor() === userId) {
       this.openActionFor.set(null);
       return;
@@ -165,10 +166,10 @@ export class EnrolledCourseList {
     this.openActionFor.set(userId);
   }
 
-  unenrollSelectedUsers(event: Event): void {
+  unenrollSelectedUsers(event: Event, rowUserId?: number): void {
     event.stopPropagation();
     if (this.unenrolling() || this.courseId === null) return; // double-click guard
-    const userIds = [...this.selectedIds()];
+    const userIds = rowUserId === undefined ? [...this.selectedIds()] : [rowUserId];
     if (!userIds.length) {
       this.actionError.set('Please select at least one user');
       this.openActionFor.set(null);
@@ -269,6 +270,11 @@ export class EnrolledCourseList {
  
 
 readonly openStatusDropdownFor = signal<string | number | null>(null);
+  readonly statusOptions: { value: EnrollmentStatus; label: string }[] = [
+    { value: 'NOT_STARTED', label: 'Not Started' },
+    { value: 'IN_PROGRESS', label: 'In Progress' },
+    { value: 'COMPLETED', label: 'Completed' },
+  ];
 
 toggleStatusDropdown(id: string | number): void {
   this.openStatusDropdownFor.update(
@@ -276,10 +282,7 @@ toggleStatusDropdown(id: string | number): void {
   );
 }
 
-selectEnrollmentStatus(
-  enrollment: any,
-  status: string
-): void {
+  selectEnrollmentStatus(enrollment: Enrollment, status: EnrollmentStatus): void {
   this.updateEnrollmentStatus(enrollment, status);
   this.openStatusDropdownFor.set(null);
 }
@@ -306,17 +309,11 @@ getStatusValue(status: string | null | undefined): string {
   }
 }
 
-updateEnrollmentStatus(enrollment: any, status: string): void {
-  const validStatuses = [
-    'NOT_STARTED',
-    'IN_PROGRESS',
-    'COMPLETED'
-  ];
-
-  if (!validStatuses.includes(status)) {
-    return;
+  statusLabel(status: string | null | undefined): string {
+    return this.statusOptions.find(option => option.value === this.getStatusValue(status))?.label ?? 'Not Started';
   }
 
+  updateEnrollmentStatus(enrollment: Enrollment, status: EnrollmentStatus): void {
   enrollment.status = status;
 }
 

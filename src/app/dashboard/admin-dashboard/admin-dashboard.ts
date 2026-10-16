@@ -62,6 +62,14 @@ export class AdminDashboard {
   readonly breadcrumbs = computed<Breadcrumb[]>(() => {
     const [path, query = ''] = this.currentUrl().split('#')[0].split('?');
 
+    if (/^\/admin-dashboard(?:\/courses\/\d+)?\/question-banks\/?$/.test(path)) {
+      return [
+        { label: 'Content Management', link: null, plain: true },
+        { label: 'Course List', link: ['/admin-dashboard', 'courses'], plain: true },
+        { label: 'Question Bank', link: null, plain: true },
+      ];
+    }
+
     // /admin-dashboard/courses            -> Content Management > Course List
     // /admin-dashboard/courses?organize=5 -> Content Management > Course List > Organize Modules
     if (/^\/admin-dashboard\/courses\/?$/.test(path)) {

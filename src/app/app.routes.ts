@@ -25,6 +25,10 @@ export const routes: Routes = [
       import('./auth/reset-password/reset-password').then((m) => m.ResetPassword),
     title: 'Reset Password',
   },
+  {
+    path: 'question-banks',
+    redirectTo: 'admin-dashboard/question-banks',
+  },
 
   // ---------- Super-admin-dashboard ----------
   {
@@ -83,6 +87,22 @@ export const routes: Routes = [
             (m) => m.CourseManagement,
           ),
         title: 'Course Management',
+      },
+      {
+        path: 'question-banks',
+        loadComponent: () =>
+          import('./course-module/organize-sections/question-bank/question-bank').then(
+            (m) => m.QuestionBankComponent,
+          ),
+        title: 'Question Bank',
+      },
+      {
+        path: 'courses/:courseId/question-banks',
+        loadComponent: () =>
+          import('./course-module/organize-sections/question-bank/question-bank').then(
+            (m) => m.QuestionBankComponent,
+          ),
+        title: 'Question Bank',
       },
 
       {

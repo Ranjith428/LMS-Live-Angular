@@ -120,13 +120,13 @@
               <td class="px-2">{{ formatDate(enrollment.expirationDate) }}</td>
               <td class="px-2">
                 @if (enrollment.progress !== null) {
-                <div class="relative h-3.5 w-full max-w-20 overflow-hidden rounded-full bg-[#e7e7e7]" role="progressbar"
+                <div class="relative h-5 w-full max-w-20 overflow-hidden rounded-full bg-[#e7e7e7]" role="progressbar"
                   aria-label="Course progress" aria-valuemin="0" aria-valuemax="100"
                   [attr.aria-valuenow]="enrollment.progress" [attr.aria-valuetext]="progressLabel(enrollment.progress)">
                   <span
                     class="absolute inset-y-0 left-0 rounded-full bg-[#61b7c5] transition-[width] motion-reduce:transition-none"
                     [style.width.%]="enrollment.progress" data-progress-fill></span>
-                  <span class="absolute inset-0 flex items-center px-1.5 text-[8px] leading-none text-[#3f6870]">
+                  <span class="absolute inset-0 flex items-center px-1.5 text-[10px] leading-none text-[#3f6870]">
                     {{ progressLabel(enrollment.progress) }}
                   </span>
                 </div>
@@ -136,22 +136,24 @@
               </td>
               <td class="px-2">
                 <div class="relative inline-flex items-center">
-                  <select [value]="getStatusValue(enrollment.status)" (change)="updateEnrollmentStatus(enrollment,$any($event.target).value)" class="w-[100px] cursor-pointer appearance-none rounded-full border border-transparent py-1.5 pl-3 pr-5 text-[10px] font-medium outline-none transition-all duration-200 focus:border-[#73c1d0] focus:ring-2 focus:ring-[#73c1d0]/20"
-                    [class.bg-gray-100]="getStatusValue(enrollment.status) === 'NOT_STARTED'"
-                    [class.text-gray-600]="getStatusValue(enrollment.status) === 'NOT_STARTED'"
-                    [class.bg-[#e8f8fb]]="getStatusValue(enrollment.status) === 'IN_PROGRESS'"
-                    [class.text-[#267d8a]]="getStatusValue(enrollment.status) === 'IN_PROGRESS'"
-                    [class.bg-emerald-50]="getStatusValue(enrollment.status) === 'COMPLETED'"
-                    [class.text-emerald-700]="getStatusValue(enrollment.status) === 'COMPLETED'"
-                    [attr.aria-label]="'Change status for ' + enrollment.username">
-                    <option value="NOT_STARTED">Not Started</option>
-                    <option value="IN_PROGRESS">In Progress</option>
-                    <option value="COMPLETED">Completed</option>
-                  </select>
-                  <svg class="pointer-events-none absolute right-2 h-3 w-4" xmlns="http://www.w3.org/2000/svg"
-                    fill="none" viewBox="0 0 20 20" stroke="currentColor" stroke-width="2" aria-hidden="true">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="m6 9 6 6 6-6" />
-                  </svg>
+                  <button type="button" class="inline-flex min-w-[80px] items-center justify-between gap-2 rounded-full bg-[#f5f5f5] px-2 py-0 text-[11px] text-[#444] outline-none transition hover:bg-[#ededed] focus-visible:ring-2 focus-visible:ring-[#73c1d0]"
+                    [attr.aria-label]="'Change status for ' + enrollment.username"
+                    aria-haspopup="listbox" [attr.aria-expanded]="openStatusDropdownFor() === enrollment.userId"
+                    (click)="toggleStatusDropdown(enrollment.userId)">
+                    <span>{{ statusLabel(enrollment.status) }}</span><svg class="size-3 text-neutral-400" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="m5 7 5 5 5-5" /></svg>
+                  </button>
+                  @if (openStatusDropdownFor() === enrollment.userId) {
+                    <div class="absolute left-0 top-full z-20 mt-1 w-24 rounded-xl border border-neutral-100 bg-white p-1 shadow-xl" role="listbox" [attr.aria-label]="'Status for ' + enrollment.username">
+                      @for (status of statusOptions; track status.value) {
+                        <button type="button" role="option" class="flex w-full items-center justify-between rounded-lg px-2 py-1 text-left text-[10px] text-neutral-700 hover:bg-neutral-50 focus-visible:bg-neutral-50 focus-visible:outline-none"
+                          [attr.aria-selected]="getStatusValue(enrollment.status) === status.value"
+                          (click)="selectEnrollmentStatus(enrollment, status.value)">
+                          {{ status.label }}
+                          @if (getStatusValue(enrollment.status) === status.value) { <svg class="size-3 text-[#398995]" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="m7.5 13.2-3-3 1.4-1.4 1.6 1.6 5.6-5.6 1.4 1.4z" /></svg> }
+                        </button>
+                      }
+                    </div>
+                  }
                 </div>
               </td>
               <td class="px-2">{{ progressLabel(enrollment.score) }}</td>
@@ -162,7 +164,7 @@
                 <div class="relative inline-block" (click)="$event.stopPropagation()">
                   <button type="button"
                     class="grid size-7 place-items-center rounded-full bg-[#f5f5f5] text-[#555] outline-none transition hover:bg-[#e7f6f8] focus-visible:ring-2 focus-visible:ring-[#61b7c5]/60"
-                    [disabled]="!isSelected(enrollment.userId) || unenrolling()" aria-haspopup="menu"
+                    [disabled]="unenrolling()" aria-haspopup="menu"
                     [attr.aria-expanded]="openActionFor() === enrollment.userId"
                     [attr.aria-label]="'More actions for ' + enrollment.username"
                     (click)="toggleActionMenu($event, enrollment.userId)">
@@ -174,17 +176,11 @@
                   </button>
                   @if (openActionFor() === enrollment.userId) {
                   <div
-                    class="absolute right-7 top-0 z-30 w-20 rounded-xl border border-neutral-100 bg-white p-1.5 text-left shadow-xl"
+                      class="absolute right-7 top-0 z-30 min-w-30 rounded-xl border border-neutral-100 bg-white p-1.5 text-left shadow-xl"
                     role="menu">
                     <button type="button" role="menuitem"
-                      class="w-full rounded-lg px-3 py-1 text-left text-[10px] text-red-700 outline-none transition hover:bg-red-50 focus-visible:bg-red-50 disabled:opacity-50"
-                      [disabled]="unenrolling()" (click)="unenrollSelectedUsers($event)">
-                      {{
-                      unenrolling()
-                      ? 'Unenrolling…'
-                      : selectedCount() > 1
-                      ? 'Unenroll selected'
-                      : 'Unenroll'
+                      class="w-full rounded-lg px-3 py-0 text-left text-[10px] text-red-700 outline-none transition hover:bg-red-50 focus-visible:bg-red-50 disabled:opacity-50"
+                      [disabled]="unenrolling()" (click)="unenrollSelectedUsers($event)"> {{unenrolling() ? 'Unenrolling…' : selectedCount() > 1 ? 'Unenroll selected' : 'Unenroll'
                       }}
                     </button>
                   </div>

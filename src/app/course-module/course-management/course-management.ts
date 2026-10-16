@@ -519,6 +519,9 @@ export class CourseManagement {
 }
  
   openQuestionBanks(courseId: number, moduleId: unknown): void {
-    this.router.navigate(['/courses', courseId, 'question-banks'], { queryParams: { moduleId } });
+    void this.router.navigate(
+      ['/admin-dashboard', 'courses', courseId, 'question-banks'],
+      { queryParams: { moduleId } },
+    );
   }
 }

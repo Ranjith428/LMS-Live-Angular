@@ -1,3 +1,13 @@
+@if (attemptQuizOpen()) {
+<div class="min-h-screen">
+  <div class="mx-auto flex max-w-[1440px] items-center px-4 pt-4 sm:px-6 lg:px-8">
+    <button type="button" class="rounded-lg px-3 py-2 text-sm text-neutral-700 hover:bg-neutral-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#3e8d99]" (click)="attemptQuizOpen.set(false)">
+      Back to sections
+    </button>
+  </div>
+  <app-attempt-quiz [freshAttempt]="true" />
+</div>
+} @else {
 <div class="relative w-full px-4 pb-7 font-sans text-[#4b4b4b] sm:px-6 lg:px-10">
   <header class="relative flex min-h-14 w-full flex-wrap items-center justify-between gap-4 py-3">
     <div class="flex items-center gap-8 text-xs">
@@ -281,6 +291,11 @@
     </div>
     }
   </main>
+  <div class="mb-6 flex justify-center">
+    <button type="button" class="rounded-lg bg-[#3e8d99] px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-[#327580] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#3e8d99]" (click)="attemptQuizOpen.set(true)">
+      Attempt Quiz
+    </button>
+  </div>
 
   @if (previewingSection(); as previewSection) {
   <div class="fixed inset-0 z-[65] grid place-items-center bg-black/45 p-4 backdrop-blur-sm">
@@ -406,3 +421,4 @@
   </div>
   }
 </div>
+}

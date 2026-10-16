@@ -160,7 +160,7 @@
   <div class="relative flex-1">
     <!-- Decorative curved background shape -->
     <aside
-      class="pointer-events-none fixed left-0 top-16 z-0 hidden h-[calc(100vh-4rem)] w-[clamp(48px,4.5vw,84px)] text-[#5abacb] sm:block"
+      class="pointer-events-none fixed left-0 top-16 z-0 h-[calc(100vh-4rem)] w-[clamp(48px,4.5vw,84px)] text-[#5abacb]"
       aria-hidden="true"
     >
       <svg class="h-full w-full" viewBox="0 0 140 1000" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
@@ -170,7 +170,7 @@
 
     <!-- Icon nav, placed on top of the curve -->
     <nav
-      class="fixed left-0 top-16 z-10 hidden h-[calc(100vh-4rem)] w-[clamp(48px,4.5vw,84px)] flex-col items-center justify-center gap-8 sm:flex"
+      class="fixed left-0 top-16 z-10 flex h-[calc(100vh-4rem)] w-[clamp(48px,4.5vw,84px)] flex-col items-center justify-center gap-8"
     >
       <!-- Dashboard Home -->
       <a
@@ -217,7 +217,7 @@
       </a>
     </nav>
 
-    <main class="min-h-[calc(100vh-4rem)] bg-[#f5f5f5] pl-0 pt-2 sm:pl-[clamp(48px,4.5vw,84px)]">
+    <main class="min-h-[calc(100vh-4rem)] bg-[#f5f5f5] pl-[clamp(48px,4.5vw,84px)] pt-2">
       <router-outlet></router-outlet>
     </main>
   </div>

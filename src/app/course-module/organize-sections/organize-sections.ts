@@ -11,6 +11,7 @@ import {
   signal,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { Router } from '@angular/router';
 import { finalize } from 'rxjs/operators';
 
 import { environment } from '../../../environments/environment';
@@ -24,6 +25,7 @@ import {
 import { MultimediaUpload } from '../pop-modals/multimedia-upload/multimedia-upload';
 import { MultimediaManagementService } from '../../services/multimedia-management.service';
 import { MultimediaResource, MultimediaSaveResult } from '../multimedia.model';
+import { AttemptQuizComponent } from './attempt-quiz/attempt-quiz';
 
 // Must match SectionService.validateAndNormalizeName on the backend.
 const MIN_CHARS = 3;
@@ -42,11 +44,12 @@ export interface SectionActivity {
 @Component({
   selector: 'app-organize-sections',
   // CHANGED: added MultimediaUpload
-  imports: [MultimediaUpload],
+  imports: [MultimediaUpload, AttemptQuizComponent],
   templateUrl: './organize-sections.html',
   styleUrl: './organize-sections.css',
 })
 export class OrganizeSections implements OnInit, OnDestroy {
+  readonly attemptQuizOpen = signal(false);
   /** The course opened from the Course List. */
   @Input({ required: true }) course!: Course;
 
@@ -56,6 +59,7 @@ export class OrganizeSections implements OnInit, OnDestroy {
   readonly editCourseRequested = output<void>();
 
   private readonly sectionService = inject(SectionManagementService);
+  private readonly router = inject(Router);
   // NEW
   private readonly multimediaService = inject(MultimediaManagementService);
   private readonly destroyRef = inject(DestroyRef);
@@ -589,9 +593,11 @@ export class OrganizeSections implements OnInit, OnDestroy {
       });
   }
 
-  openQuestionBankList(_sectionId: number): void {
+  openQuestionBankList(sectionId: number): void {
     this.activityMenuSectionId.set(null);
-    this.showToast('Question Bank will be available soon.');
+    void this.router.navigate(['/admin-dashboard', 'question-banks'], {
+      queryParams: { courseId: this.course.id, sectionId },
+    });
   }
 
   startActivityDrag(event: DragEvent, sectionId: number, index: number): void {
